@@ -68,7 +68,7 @@ func schedule(jobName string, mapFiles []string, nReduce int, phase jobPhase, re
 					if ok == false {
 						ch_task <- task_id
 					} else {
-						debug("the task %v has done %v", task_id, phase)
+						debug("the task %v has done %v\n", task_id, phase)
 						done.Done()
 					}
 				}

@@ -85,3 +85,10 @@ go test -run TestParallel
 - You may find sync.WaitGroup useful.
 - The easiest way to track down bugs is to insert print statements (perhaps calling debug() in common.go), collect the output in a file with go test -run TestParallel > out, and then think about whether the output matches your understanding of how your code should behave. The last step is the most important.
 - To check if your code has race conditions, run Go's race detector with your test: go test -race -run TestParallel > out.
+
+
+### Part IV: Handling worker failures
+
+In this part you will make the master handle failed workers. MapReduce makes this relatively easy because workers don't have persistent state. If a worker fails while handling an RPC from the master, the master's call() will eventually return false due to a timeout. In that situation, the master should re-assign the task given to the failed worker to another worker.
+
+An RPC failure doesn't necessarily mean that the worker didn't execute the task; the worker may have executed it but the reply was lost, or the worker may still be executing but the master's RPC timed out. Thus, it may happen that two workers receive the same task, compute it, and generate output. Two invocations of a map or reduce function are required to generate the same output for a given input (i.e. the map and reduce functions are "functional"), so there `won't be inconsistencies` if subsequent processing sometimes reads one output and sometimes the other. In addition, the MapReduce framework ensures that map and reduce function output appears `atomically`: the output file will either not exist, or will contain the entire output of a single execution of the map or reduce function (the lab code doesn't actually implement this, but instead only fails workers at the end of a task, so there aren't concurrent executions of a task).
