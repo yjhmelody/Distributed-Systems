@@ -62,7 +62,7 @@ func schedule(jobName string, mapFiles []string, nReduce int, phase jobPhase, re
 						task_id,
 						n_other,
 					}
-					ok := call(w, "Work.DoTask", &doTaskArgs, nil)
+					ok := call(w, "Worker.DoTask", &doTaskArgs, nil)
 					
 					// call again until success
 					if ok == false {
