@@ -62,3 +62,26 @@ To make testing easy for you, run:
 ```
 $ bash ./test-wc.sh
 ```
+
+### Part III: Distributing MapReduce tasks
+
+The master calls schedule() twice during a MapReduce job, once for the Map phase, and once for the Reduce phase. schedule()'s job is to hand out tasks to the available workers. There will usually be more tasks than worker threads, so schedule() must give each worker a sequence of tasks, one at a time. schedule() should wait until all tasks have completed, and then return. 
+
+schedule() learns about the set of workers by reading its registerChan argument. That channel yields a string for each worker, containing the worker's RPC address. Some workers may exist before schedule() is called, and some may start while schedule() is running; all will appear on registerChan. schedule() should use all the workers, including ones that appear after it starts.
+
+schedule() tells a worker to execute a task by sending a Worker.DoTask RPC to the worker. This RPC's arguments are defined by DoTaskArgs in mapreduce/common_rpc.go. The File element is only used by Map tasks, and is the name of the file to read; schedule() can find these file names in mapFiles.
+
+Use the call() function in mapreduce/common_rpc.go to send an RPC to a worker. The first argument is the the worker's address, as read from registerChan. The second argument should be "Worker.DoTask". The third argument should be the DoTaskArgs structure, and the last argument should be nil.
+
+#### lint
+
+```sh
+go test -run TestParallel
+```
+
+- RPC package documents the Go RPC package.
+- schedule() should send RPCs to the workers in parallel so that the workers can work on tasks concurrently. You will find the go statement useful for this purpose; see Concurrency in Go.
+- schedule() must wait for a worker to finish before it can give it another task. You may find Go's channels useful.
+- You may find sync.WaitGroup useful.
+- The easiest way to track down bugs is to insert print statements (perhaps calling debug() in common.go), collect the output in a file with go test -run TestParallel > out, and then think about whether the output matches your understanding of how your code should behave. The last step is the most important.
+- To check if your code has race conditions, run Go's race detector with your test: go test -race -run TestParallel > out.
